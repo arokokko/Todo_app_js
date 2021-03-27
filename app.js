@@ -32,99 +32,81 @@ const tasks = [
 ];
 
 (function (arrOfTasks) {
-	//создаем объект из массива данных
-	const objOfTasks = tasks.reduce((acc, task) => {
-		acc[task._id] = task;
-		return acc;
-	}, {});
-	// получаем общий контейнер списка дел
-	const listContainer = document.querySelector('.tasks-list-section .list-group');
-	// получаем форму добавления дел в список и ее элементы
-	const form = document.forms['addTask'],
-		  formTitle = form.elements['title'],
-		  formBody = form.elements['body'];
+    const objOfTasks = arrOfTasks.reduce((acc, task) => {
+        acc[task._id] = task;
+        return acc;
+    }, {});
 
+    
+    const listContainer = document.querySelector('.tasks-list-section .list-group');
+    const form = document.forms['addTask'];
 
-	renderAllTasks(objOfTasks);
-	form.addEventListener('submit', onFormSubmitHandler);
+    // events
+    renderAllTasks(objOfTasks);
+    form.addEventListener('submit', onFormSubmitHandler);
+    listContainer.addEventListener('click', onDeleteHandler);
 
-	// функция рендера списка дел на странице
-	function renderAllTasks(tasklist) {
-		const fragment = document.createDocumentFragment();
-		Object.values(tasklist).forEach(task => {
-			const liItem = listItemTemplate(task);
-			fragment.appendChild(liItem);
-		});
-		listContainer.appendChild(fragment);
-	}
+    // functions
+    function renderAllTasks(tasksList) {
+        if(!tasksList) {
+            console.error('Pass the argument to the function');
+            return;
+        }
 
-	// функция создания отдельного элемента списка
-	function listItemTemplate({_id, title, body}) {
-		const li = document.createElement('li');
-		li.classList.add(
-			'list-group-item', 
-			'd-flex', 
-			'align-items-center', 
-			'flex-wrap', 
-			'mt-2'
-		);
+        const fragment = document.createDocumentFragment();
+        Object.values(tasksList).forEach(task => {
+            fragment.appendChild(listItemTemplate(task));
+        });
+        
+        listContainer.innerHTML = '';
+        listContainer.appendChild(fragment);
+    }
 
-		const arrInnerLi = [];
+    function listItemTemplate({_id, body, title}) {
+        
+        const li = document.createElement('li');
+        li.classList.add('list-group-item', 'd-flex', 'align-items-center', 'flex-wrap', 'mt-2');
+        li.setAttribute('data-id', _id);
+        li.innerHTML =
+            `<h5>${title}</h5>
+            <button class="btn btn-danger ml-auto delete-btn">Delete task</button>
+            <p class="mt-2 w-100">${body}</p>`;
+        return li;
+    }
 
-		const span = document.createElement('span');
-		span.textContent = title;
-		span.style.fontWeight = 'bold';
-		arrInnerLi.push(span);
+    function onFormSubmitHandler(e) {
+        e.preventDefault();
+        const formBodyValue = form.elements['body'].value,
+            formTitleValue = form.elements['title'].value;
 
-		const deleteBtn = document.createElement('button');
-		deleteBtn.textContent = 'Delete';
-		deleteBtn.classList.add(
-			'btn', 
-			'btn-danger', 
-			'ml-auto', 
-			'delete-btn'
-		);
-		arrInnerLi.push(deleteBtn);
+        if(!formBodyValue || !formTitleValue) {
+            alert("Please input title and text");
+            return;
+        }
+        
+        const newTask = createNewTask(formTitleValue, formBodyValue);
+        form.reset();
+        objOfTasks[newTask._id] = newTask;
+        renderAllTasks(objOfTasks);
+    }
 
-		const article = document.createElement('p');
-		article.textContent = body;
-		article.classList.add(
-			'mt-2',
-			'w-100'
-		);
-		arrInnerLi.push(article);
+    function createNewTask(title, body) {
+        const newTask = {
+            title,
+            body,
+            comleted: false,
+            _id: `task_${Math.random()}`
+        }
 
-		arrInnerLi.forEach(item => {
-			li.appendChild(item);
-		});
+        return newTask;
+    }
 
-		return li;
-	}
-
-	// функция обработки формы добавления дел 
-	function onFormSubmitHandler(e) {
-		e.preventDefault();
-		const titleValue = formTitle.value,
-			  bodyValue = formBody.value;
-		const task = createNewTask(titleValue, bodyValue); 
-		const listItem = listItemTemplate(task);
-		listContainer.prepend(listItem);
-		form.reset();
-	}
-
-	//функция создания нового задания
-	function createNewTask(title, body) {
-		const newTask = {
-			title,
-			body,
-			completed: false,
-			_id: `task-${Math.random()}`
-		}
-
-		objOfTasks[newTask._id] = newTask;
-		
-		return {...newTask};
-	}
+    function onDeleteHandler({target}) {
+        if (target.classList.contains('delete-btn')) {
+            const id = target.closest('[data-id]').dataset.id;
+            delete objOfTasks[id];
+            renderAllTasks(objOfTasks);
+        }
+    }
 
 })(tasks);
-
