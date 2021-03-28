@@ -37,26 +37,43 @@ const tasks = [
         return acc;
     }, {});
 
+    let showOnlyCompleted = false;
     
     const listContainer = document.querySelector('.tasks-list-section .list-group');
     const form = document.forms['addTask'];
+    const btnsList = document.querySelector('.buttons-list');
 
     // events
     renderAllTasks(objOfTasks);
     form.addEventListener('submit', onFormSubmitHandler);
     listContainer.addEventListener('click', onDeleteHandler);
     listContainer.addEventListener('click', onCompleteHandler);
+    btnsList.addEventListener('click', onShowingTasksHandler);
 
     // functions
-    function renderAllTasks(tasksList) {
-        if(!tasksList) {
-            console.error('Pass the argument to the function');
-            return;
+
+    // handler buttons show all tasks and show not completed tasks
+    function onShowingTasksHandler({target}) {
+        if (target.classList.contains('not-completed-tasks')) {
+            showOnlyCompleted = true;
+        } else if (target.classList.contains('all-tasks')) {
+            showOnlyCompleted = false;
         }
+        renderAllTasks(objOfTasks);
+    }
+
+    // sort array of tasks 
+    function byField(field) {
+        return (a, b) => a[field] > b[field] ? 1 : -1;
+    }
+    
+
+    function renderAllTasks(tasksList) {
 
         const fragment = document.createDocumentFragment();
-        const arrayOfTasks = Object.values(tasksList);
-
+        const sortedArrayFromObject = Object.values(tasksList).sort(byField('completed'));
+        let arrayOfTasks = showOnlyCompleted ? sortedArrayFromObject.filter(item => !item.completed) : sortedArrayFromObject;
+        
         if (!arrayOfTasks.length) {
             fragment.appendChild(messageNoTasks());
         } else {
@@ -130,6 +147,7 @@ const tasks = [
         return newTask;
     }
 
+    // handler button delete task
     function onDeleteHandler({target}) {
         if (target.classList.contains('delete-btn')) {
             const id = target.closest('[data-id]').dataset.id;
@@ -138,6 +156,7 @@ const tasks = [
         }
     }
 
+    // handler button complete task
     function onCompleteHandler({target}) {
         if (target.classList.contains('complete-btn')) {
             const id = target.closest('[data-id]').dataset.id;
@@ -145,7 +164,5 @@ const tasks = [
             renderAllTasks(objOfTasks);
         }
     }
-
-
 
 })(tasks);
