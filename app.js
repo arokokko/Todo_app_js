@@ -45,6 +45,7 @@ const tasks = [
     renderAllTasks(objOfTasks);
     form.addEventListener('submit', onFormSubmitHandler);
     listContainer.addEventListener('click', onDeleteHandler);
+    listContainer.addEventListener('click', onCompleteHandler);
 
     // functions
     function renderAllTasks(tasksList) {
@@ -54,23 +55,51 @@ const tasks = [
         }
 
         const fragment = document.createDocumentFragment();
-        Object.values(tasksList).forEach(task => {
-            fragment.appendChild(listItemTemplate(task));
-        });
+        const arrayOfTasks = Object.values(tasksList);
+
+        if (!arrayOfTasks.length) {
+            fragment.appendChild(messageNoTasks());
+        } else {
+            arrayOfTasks.forEach(task => {
+                fragment.appendChild(listItemTemplate(task));
+            });
+        }
         
         listContainer.innerHTML = '';
         listContainer.appendChild(fragment);
     }
 
-    function listItemTemplate({_id, body, title}) {
-        
+    // generate message when no tasks
+    function messageNoTasks() {
         const li = document.createElement('li');
+
+        li.classList.add('list-group-item', 'd-flex', 'align-items-center', 'flex-wrap', 'mt-2');
+        li.innerHTML = `<p class="mt-2 w-100">There are no tasks</p>`;
+
+        return li;
+    }
+
+    // generate separate tasks
+    function listItemTemplate({_id, body, completed, title}) {
+        const li = document.createElement('li');
+
         li.classList.add('list-group-item', 'd-flex', 'align-items-center', 'flex-wrap', 'mt-2');
         li.setAttribute('data-id', _id);
-        li.innerHTML =
+        li.innerHTML = 
             `<h5>${title}</h5>
-            <button class="btn btn-danger ml-auto delete-btn">Delete task</button>
-            <p class="mt-2 w-100">${body}</p>`;
+            <button class="btn btn-danger ml-auto delete-btn">Delete task</button>`;
+
+        // checking completed task or not
+        if (!completed) {
+            li.innerHTML +=
+                `<p class="mt-2 w-100">${body}</p>   
+                <button class="btn btn-info ml-auto complete-btn">Mark as completed</button>`; 
+        } else {
+            li.innerHTML +=
+            `<p class="mt-2 w-100" style="text-decoration:line-through">${body}</p>   
+            <button class="btn btn-info ml-auto complete-btn">Recover task</button>`;
+        }
+        
         return li;
     }
 
@@ -94,7 +123,7 @@ const tasks = [
         const newTask = {
             title,
             body,
-            comleted: false,
+            completed: false,
             _id: `task_${Math.random()}`
         }
 
@@ -108,5 +137,15 @@ const tasks = [
             renderAllTasks(objOfTasks);
         }
     }
+
+    function onCompleteHandler({target}) {
+        if (target.classList.contains('complete-btn')) {
+            const id = target.closest('[data-id]').dataset.id;
+            objOfTasks[id].completed = !objOfTasks[id].completed;
+            renderAllTasks(objOfTasks);
+        }
+    }
+
+
 
 })(tasks);
