@@ -106,6 +106,7 @@ const tasks = [
     };
 
     let showOnlyCompleted = false;
+    let lastSelectedTheme = localStorage.getItem('app-theme') || 'default';
     
     const listContainer = document.querySelector('.tasks-list-section .list-group');
     const form = document.forms['addTask'];
@@ -113,6 +114,8 @@ const tasks = [
     const themeSelect = document.querySelector('#themeSelect');
 
     // events
+    setTheme(lastSelectedTheme);
+    setValueNavbar();
     renderAllTasks(objOfTasks);
     form.addEventListener('submit', onFormSubmitHandler);
     listContainer.addEventListener('click', onDeleteHandler);
@@ -237,10 +240,21 @@ const tasks = [
 
     // handler select theme
     function onThemeSelectHandler() {
-        const selectedThemeObject = themes[themeSelect.value];
+        const selectedTheme = themeSelect.value;
+        setTheme(selectedTheme);
+        localStorage.setItem("app-theme", selectedTheme);
+        lastSelectedTheme = selectedTheme;
+    }
+
+    function setTheme(theme) {
+        const selectedThemeObject = themes[theme];
         Object.entries(selectedThemeObject).forEach(([key, value]) => {
             document.documentElement.style.setProperty(key, value);
         });
+    }
+
+    function setValueNavbar() {
+        themeSelect.value = lastSelectedTheme;
     }
 
 })(tasks);
