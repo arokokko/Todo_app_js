@@ -45,4 +45,4 @@ form.addEventListener('submit', (e) => {
         container.insertAdjacentElement('afterbegin', card);
     });
     form.reset();
-})
+});
