@@ -2,35 +2,99 @@ const btnGet = document.querySelector('.get_posts');
 const btnSend = document.querySelector('.send_post');
 const container = document.querySelector('.container');
 
-function getPosts(cb) {
-    const xhr = new XMLHttpRequest();
-    xhr.open("GET", "https://jsonplaceholder.typicode.com/posts");
-    xhr.timeout = 10000;
+// universal function get and post requests to server with XMLHttpRequest
+function myHttpRequest() {
+    return {
+        get(url, cb, time = 10000) {
+            try {
+                const xhr = new XMLHttpRequest();
+                xhr.open("GET", url);
+                xhr.timeout = time;
 
-    xhr.addEventListener('load', () => {
-        
-        const response = JSON.parse(xhr.response);
-        cb(response);
-    });
-    xhr.addEventListener("timeout", () => {
-        console.log("Server is not answer");
-    });
+                xhr.addEventListener('load', () => {
+                    // if status of server response is not 2**
+                    if(Math.floor(xhr.status / 100) != 2) {
+                        console.log(`Error. Status of server response is ${xhr.status}`);
+                        return;
+                    }
+                    const response = JSON.parse(xhr.response);
+                    cb(response);
+                });
 
-    xhr.send();
+                xhr.addEventListener("timeout", () => {
+                    console.log("Server is not answer");
+                });
+                
+                xhr.addEventListener("error", () => {
+                    console.log("Connection to server is failed");
+                });
+
+                xhr.send();
+            } catch (error) {
+                console.log(error);
+            }
+        },
+        post(url, body, cb, headers = {}, time = 10000) {
+            try {
+                const xhr = new XMLHttpRequest();
+                xhr.open("POST", url);
+                xhr.timeout = time;
+
+                xhr.addEventListener('load', () => {
+                    // if status of server response is not 2**
+                    if(Math.floor(xhr.status / 100) !== 2) {
+                        console.log(`Error. Status of server response is ${xhr.status}`, xhr);
+                        return;
+                    }
+                    const response = JSON.parse(xhr.response);
+                    cb(response);
+                });
+
+                xhr.addEventListener("timeout", () => {
+                    console.log("Server is not answer");
+                });
+                
+                xhr.addEventListener("error", () => {
+                    console.log("Connection to server is failed");
+                });
+
+                Object.entries(headers).forEach(([key, value]) => {
+                    xhr.setRequestHeader(key, value);
+                });
+
+                xhr.send(JSON.stringify(body));
+
+            } catch (error) {
+                console.log(error);
+            }
+        }
+    }
 }
 
-function createPost(body, cb) {
-    const xhr = new XMLHttpRequest();
-    xhr.open("POST", "https://jsonplaceholder.typicode.com/posts");
+// example of using unifunction
+const request = myHttpRequest();
 
-    xhr.addEventListener('load', () => {
-        const response = JSON.parse(xhr.response);
-        cb(response);
-    });
+btnGet.addEventListener('click', () => {
+    request.get('https://jsonplaceholder.typicode.com/posts', renderPost);
+});
 
-    xhr.setRequestHeader('Content-type', 'application/json;charset=utf-8');
-    xhr.send(JSON.stringify(body));
-}
+btnSend.addEventListener('click', () => {
+    const newPost = {
+        title: 'foo',
+        body: 'bar',
+        userId: 1
+    };
+    request.post(
+        'https://jsonplaceholder.typicode.com/posts',
+        newPost, 
+        (response) => {
+            const card = cardTemplate(response);
+            container.insertAdjacentElement('afterbegin', card);
+        },
+        {'Content-type': 'application/json;charset=utf-8'}
+    );
+
+});
 
 function renderPost(response) {
     const fragment = document.createDocumentFragment();
@@ -54,43 +118,6 @@ function cardTemplate(post) {
     return card;
 }
 
-btnGet.addEventListener('click', () => {
-    getPosts(renderPost);
-});
 
-btnSend.addEventListener('click', () => {
-    const newPost = {
-        title: 'foo',
-        body: 'bar',
-        userId: 1
-    }
 
-    createPost(newPost, (response) => {
-        console.log(response);
-        const card = cardTemplate(response);
-        container.insertAdjacentElement('afterbegin', card);
-    });
-});
 
-// universal function 
-function myHttpRequest({method, url} = {}, cb, time = 10000) {
-    const xhr = new XMLHttpRequest();
-    xhr.open(method, url);
-    xhr.timeout = time;
-
-    xhr.addEventListener('load', () => {
-        const response = JSON.parse(xhr.response);
-        cb(response);
-    });
-    xhr.addEventListener("timeout", () => {
-        console.log("Server is not answer");
-    });
-    xhr.addEventListener("error", () => {
-        console.log("Connection to server is failed");
-    });
-
-    xhr.send();
-}
-
-myHttpRequest({method: "GET", url: "https://jsonplaceholder.typicode.com/posts"},
-(res) => console.log(res));
